@@ -18,7 +18,7 @@ var db = new sqlite3.Database('eventme.db', (err) => {
     logger.info('Connected to db');
 })
 
-const dbinit = true;
+const dbinit = false;
 if (dbinit) {
     db.serialize(() => {
         db.run('CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY, name TEXT, channelId TEXT, date INTEGER, description TEXT, UNIQUE(name, channelId))')
