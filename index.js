@@ -153,7 +153,7 @@ bot.on('message', function (userName, userId, channelId, message, evt) {
                     db.all('SELECT * FROM responses WHERE eventId = ?', [eventRow.id], (err, rows) => {
                         var message = eventRow.name + '\n';
                         message += ('-'.repeat(eventRow.name.length) + '\n');
-                        message += (new Date(eventRow.date) + '\n');
+                        message += (new Date(eventRow.date).toLocaleString() + '\n');
                         message += eventRow.description + '\n\n';
                         message += 'Responses\n------------\n';
                         rows.forEach((row) => {
