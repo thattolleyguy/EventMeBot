@@ -107,10 +107,8 @@ bot.on('message', function (userName, userId, channelId, message, evt) {
                 });
                 break;
             case 'create':
-                // !create name date time description
-                var datestring = args[1] + ' ' + args[2];
-                var parts = datestring.match(/(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})/);
-                var datetime = Date.UTC(+parts[3], parts[2] - 1, +parts[1], +parts[4], +parts[5]);
+                // !create name datetime description
+                var date = Date.parse(args[1]);
                 var name = args[0];
                 if (/^\d+$/.test(name)) {
                     bot.sendMessage({
@@ -119,8 +117,8 @@ bot.on('message', function (userName, userId, channelId, message, evt) {
                     })
                     return;
                 }
-                var description = args.slice(3).join(' ');
-                db.run('INSERT INTO events (name, date, description, channelId) VALUES (?,?,?,?)', [name, datetime, description, channelId], () => {
+                var description = args.slice(2).join(' ');
+                !db.run('REPLACE INTO events (name, date, description, channelId) VALUES (?,?,?,?)', [name, date, description, channelId], () => {
                     bot.sendMessage({
                         to: channelId,
                         message: name + ' event created!'
@@ -183,7 +181,7 @@ bot.on('message', function (userName, userId, channelId, message, evt) {
                     message: 'EventMe Bot Commands\n' +
                         '----------------------------\n' +
                         '**!ping** - Test if the bot is running\n' +
-                        '**!create <name> <date> <time> <description>** - Create a new event. The date is of the format MM/dd/yyyy. Time is UTC 24 hour format (hh:mm).\n' +
+                        '**!create <name> <datetime> <description>** - Create a new event. Date format is yyyy-MM-ddThh:mm.\n' +
                         '**!in <eventName> <additionalGuests>** - Event name is optional. If you provide it, you will be marked in for that event. If you do not provide it, you will be marked in for the latest created event. Additional guests is optional as well and defaults to 0.\n' +
                         '**!out <eventName>** - Event name is optional. If you provide it, you will be marked out for that event. If you do not provide it, you will be marked out for the latest created event\n' +
                         '**!events** - Get a list of events that have been created.\n' +
