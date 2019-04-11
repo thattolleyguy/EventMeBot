@@ -118,16 +118,28 @@ bot.on('message', function (userName, userId, channelId, message, evt) {
                     return;
                 }
                 var description = args.slice(2).join(' ');
-                !db.run('REPLACE INTO events (name, date, description, channelId) VALUES (?,?,?,?)', [name, date, description, channelId], () => {
-                    bot.sendMessage({
-                        to: channelId,
-                        message: name + ' event created!'
-                    })
-                });
+                db.get('SELECT id FROM events WHERE channelId=? AND name=?', [channelId, name], (err, row) => {
+                    if (row) {
+                        db.run('UPDATE events SET date=?, description=? WHERE id=?', [date, description, row.id], () => {
+                            bot.sendMessage({
+                                to: channelId,
+                                message: name + ' event updated!'
+                            })
+                        });
+                    } else {
+                        db.run('INSERT INTO events (name, date, description, channelId) VALUES (?,?,?,?)', [name, date, description, channelId], () => {
+                            bot.sendMessage({
+                                to: channelId,
+                                message: name + ' event created!'
+                            })
+                        });
+                    }
+
+                })
+
                 break;
             case 'in':
             case 'out':
-
                 processResponseMessage(cmd, args, userName, channelId);
                 // !out ?eventName
                 break;
@@ -150,24 +162,31 @@ bot.on('message', function (userName, userId, channelId, message, evt) {
                 break;
             case 'event':
                 db.get('SELECT * FROM events WHERE channelId=? AND name=?', [channelId, args[0]], (err, eventRow) => {
-                    db.all('SELECT * FROM responses WHERE eventId = ?', [eventRow.id], (err, rows) => {
-                        var message = eventRow.name + '\n';
-                        message += ('-'.repeat(eventRow.name.length) + '\n');
-                        message += (new Date(eventRow.date).toLocaleString() + '\n');
-                        message += eventRow.description + '\n\n';
-                        message += 'Responses\n------------\n';
-                        rows.forEach((row) => {
-                            message += (row.userName + ": " + row.response);
-                            if (row.additionalGuests > 0) {
-                                message += ('+' + row.additionalGuests);
-                            }
-                            message += '\n';
+                    if (eventRow) {
+                        db.all('SELECT * FROM responses WHERE eventId = ?', [eventRow.id], (err, rows) => {
+                            var message = eventRow.name + '\n';
+                            message += ('-'.repeat(eventRow.name.length) + '\n');
+                            message += (new Date(eventRow.date).toLocaleString() + '\n');
+                            message += eventRow.description + '\n\n';
+                            message += 'Responses\n------------\n';
+                            rows.forEach((row) => {
+                                message += (row.userName + ": " + row.response);
+                                if (row.additionalGuests > 0) {
+                                    message += ('+' + row.additionalGuests);
+                                }
+                                message += '\n';
+                            })
+                            bot.sendMessage({
+                                to: channelId,
+                                message: message
+                            })
                         })
+                    } else {
                         bot.sendMessage({
                             to: channelId,
-                            message: message
+                            message: 'Event ' + args[0] + ' not found'
                         })
-                    })
+                    }
                 })
                 break;
             case 'help':
